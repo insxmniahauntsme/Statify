@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+      <PackageReference Include="Prism.Container.DryIoc" Version="9.0.107" />
+      <PackageReference Include="Prism.Core" Version="9.0.537" />
+      <PackageReference Include="Prism.DryIoc" Version="9.0.537" />
+      <PackageReference Include="Prism.Wpf" Version="9.0.537" />
+      <PackageReference Include="SpotifyAPI.Web" Version="7.2.1" />
+      <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Commands\" />
+      <Folder Include="Models\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\MainWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\spotilens-logo.png" />
+      <Resource Include="Resources\spotilens-logo.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+      <None Remove="Resources\spotilens-logo.ico" />
+      <Resource Include="Resources\spotilens-logo.ico">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+      <None Remove="Configuration\appsettings.json" />
+      <Content Include="Configuration\appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+    
+
+    <PropertyGroup>
+        <ApplicationIcon>Resources\spotilens-logo.ico</ApplicationIcon>
+    </PropertyGroup>
+
+</Project>
