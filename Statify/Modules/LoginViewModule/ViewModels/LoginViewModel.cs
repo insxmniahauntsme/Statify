@@ -33,7 +33,7 @@ public class LoginViewModel
 		                         $"{responseType}&redirect_uri={Uri.EscapeDataString(callbackUrl!)}" +
 		                         $"&scope={Uri.EscapeDataString(scopes)}";
 
-		var authorizationCodeTask = CallbackServer.StartAsync(CancellationTokenSource.Token);
+		var accessTokenTask = CallbackServer.StartAsync(CancellationTokenSource.Token);
 
 		Process.Start(new ProcessStartInfo(spotifyLoginUrl)
 		{
@@ -41,7 +41,7 @@ public class LoginViewModel
 		});
 		
 		var timeout = Task.Delay(30000); 
-		var completedTask = await Task.WhenAny(authorizationCodeTask, timeout);
+		var completedTask = await Task.WhenAny(accessTokenTask, timeout);
 
 		if (completedTask == timeout)
 		{
@@ -50,34 +50,12 @@ public class LoginViewModel
 		}
 		else
 		{
-			string authorizationCode = await authorizationCodeTask;
-			if (!string.IsNullOrEmpty(authorizationCode))
+			string accessToken = await accessTokenTask;
+			if (!string.IsNullOrEmpty(accessToken))
 			{
-				var accessToken = await GetAccessTokenAsync(clientId!, clientSecret!);
 				Console.WriteLine($"Access Token: {accessToken}");
+				CancellationTokenSource.Cancel();
 			}
 		}
-	}
-	
-	private async Task<string> GetAccessTokenAsync(string clientId, string clientSecret)
-	{
-		var tokenRequestData = new Dictionary<string, string>
-		{
-			{ "grant_type", "client_credentials" },
-			{ "client_id", clientId },
-			{ "client_secret", clientSecret }
-		};
-
-		var requestContent = new FormUrlEncodedContent(tokenRequestData);
-		var response = await _httpClient.PostAsync("https://accounts.spotify.com/api/token", requestContent);
-		var responseContent = await response.Content.ReadAsStringAsync();
-
-		if (response.IsSuccessStatusCode)
-		{
-			var tokenData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(responseContent);
-			return tokenData!["access_token"].ToString()!;
-		}
-
-		throw new Exception($"Failed to exchange client credentials for access token. Response: {responseContent}");
 	}
 }

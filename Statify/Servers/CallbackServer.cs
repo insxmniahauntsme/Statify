@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 
 namespace Statify.Servers
@@ -13,47 +14,65 @@ namespace Statify.Servers
 
         public async Task<string> StartAsync(CancellationToken token)
         {
-            _listener.Prefixes.Add(App.Configuration!["API:callback-url"]!);
-            _listener.Start();
-            
-            Console.WriteLine("Listener started on https://localhost:8080/callback/");
-
-            string authorizationCode;
-
-            while (true)
+            _listener.Prefixes.Add("https://localhost:8081/");
+            if (!_listener.IsListening)
             {
+                _listener.Start();
+                Console.WriteLine("Listening for connections on port 8081");
+            }
+            else
+            {
+                Console.WriteLine("Already listening");
+            }
+
+            while (!token.IsCancellationRequested)
+            {
+                var context = await _listener.GetContextAsync();
+                var request = context.Request;
+                var response = context.Response;
+
                 try
                 {
-                    var context = await _listener.GetContextAsync();
-                    var query = context.Request.Url!.Query;
-                    authorizationCode = GetQueryValue(query, "code");
-                    Console.WriteLine(authorizationCode);
+                    var accessToken = request.QueryString["access_token"];
 
-                    if (!string.IsNullOrEmpty(authorizationCode))
+                    if (!string.IsNullOrEmpty(accessToken))
                     {
-                        var response = context.Response;
-                        string responseString = "<HTML><BODY><h2>Authorization was successfully completed. You can close this window.</h2></BODY></HTML>";
-                        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-                        response.ContentLength64 = buffer.Length;
-                        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-                        response.Close();
-                        break; 
+                        Console.WriteLine($"Received token: {accessToken}");
+
+                        response.StatusCode = 200;
+
+                        using (var writer = new StreamWriter(response.OutputStream))
+                        {
+                            await writer.WriteAsync("Access token received");
+                        }
+
+                        return accessToken;
+                    }
+
+                    response.StatusCode = 400;
+
+                    using (var writer = new StreamWriter(response.OutputStream))
+                    {
+                        await writer.WriteAsync("Missing access code.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
+                    response.StatusCode = 500;
+                    using (var writer = new StreamWriter(response.OutputStream))
+                    {
+                        await writer.WriteAsync($"Error: {ex.Message}");
+                    }
                 }
+                finally
+                {
+                    response.OutputStream.Close();
+                }
+                
             }
-
-            _listener.Stop(); 
-            return authorizationCode!;
+            _listener.Stop();
+            return string.Empty;
         }
-
-        private string GetQueryValue(string query, string key)
-        {
-            var parameters = System.Web.HttpUtility.ParseQueryString(query);
-            return parameters[key]!;
-        }
+        
     }
 }
