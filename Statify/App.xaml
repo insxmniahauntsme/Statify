@@ -6,10 +6,12 @@
     <prism:PrismApplication.Resources>
         <!-- Colors --> 
         <Color x:Key="PrimaryAccentColor">#2aa835</Color>
+        <Color x:Key="SecondaryAccentColor">#0ffc03</Color>
         <Color x:Key="HoverGrayColor">#cacccb</Color>
         
         <!-- Brushes --> 
         <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource PrimaryAccentColor}"/>
+        <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{StaticResource SecondaryAccentColor}"/>
         <SolidColorBrush x:Key="HoverGrayBrush" Color="{StaticResource HoverGrayColor}"/>
         
         <!-- Window Control Buttons -->

@@ -2,9 +2,12 @@
 using System.Net.Http;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
+using Statify.Interfaces;
 using Statify.Modules.LoginViewModule.Views;
 using Statify.Modules.LoginViewModule;
+using Statify.Modules.OverviewViewModule;
 using Statify.Servers;
+using Statify.Services;
 using Statify.Views;
 
 namespace Statify;
@@ -19,22 +22,25 @@ public partial class App
 	protected override void OnInitialized()
 	{
 		base.OnInitialized();
-
+		
+		var regionManager = Container.Resolve<IRegionManager>();
+		
+		regionManager.RequestNavigate("MainRegion", "LoginView");
+	}
+	
+	protected override void RegisterTypes(IContainerRegistry containerRegistry)
+	{
 		var builder = new ConfigurationBuilder()
 			.SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "Configuration"))
 			.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 		
 		Configuration = builder.Build();
 		
-		var regionManager = Container.Resolve<IRegionManager>();
+		containerRegistry.RegisterInstance(Configuration);
 		
-		regionManager.RequestNavigate("MainRegion", "LoginView");
-	}
-	protected override void RegisterTypes(IContainerRegistry containerRegistry)
-	{
 		containerRegistry.Register<HttpClient>( () =>
 		{
-			var baseUrl = Configuration!["API:base-url"];
+			var baseUrl = Configuration!["SpotifyAPI:base-url"];
 			if(string.IsNullOrWhiteSpace(baseUrl))
 				throw new Exception("Couldn't get API base url");
 			
@@ -48,20 +54,24 @@ public partial class App
 			
 			return client;
 		});
-		
-		containerRegistry.Register<CallbackServer>();
+
+		containerRegistry.Register<AccessTokenServer>();
+		containerRegistry.RegisterSingleton<ITokenService, TokenService>();
+		containerRegistry.Register<ISpotifyAuthService, SpotifyAuthService>();
+		containerRegistry.Register<ISpotifyDataService, SpotifyDataService>();
+		containerRegistry.RegisterSingleton<IAccountService, AccountService>();
+
 	}
 	
 	protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
 	{
 		moduleCatalog.AddModule<LoginModule>();
+		moduleCatalog.AddModule<OverviewModule>();
 	}
-
 	
 	protected override Window CreateShell()
 	{
 		return Container.Resolve<MainWindow>();
 	}
-
 
 }
